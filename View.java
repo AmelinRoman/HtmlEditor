@@ -116,7 +116,7 @@ public class View extends JFrame implements ActionListener {
     public boolean canRedo() {
         return undoManager.canRedo();
     }
-    // Функция сбрасывания всех правок в UndoManager
+
     public void resetUndo() {
         undoManager.discardAllEdits();
     }
