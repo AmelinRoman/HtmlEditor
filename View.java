@@ -121,6 +121,14 @@ public class View extends JFrame implements ActionListener {
         undoManager.discardAllEdits();
     }
 
+    public boolean isHtmlTabSelected() {
+        if (tabbedPane.getSelectedIndex() == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public void exit() {
         controller.exit();
     }
