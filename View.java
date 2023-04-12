@@ -5,27 +5,40 @@ import com.javarush.task.task32.task3209.listeners.TabbedPaneChangeListener;
 import com.javarush.task.task32.task3209.listeners.UndoListener;
 
 import javax.swing.*;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class View extends JFrame implements ActionListener {
-
     private Controller controller;
-    private JTabbedPane tabbedPane = new JTabbedPane();
-    private JTextPane htmlTextPane = new JTextPane();
-    private JEditorPane plainTextPane = new JEditorPane();
     private UndoManager undoManager = new UndoManager();
     private UndoListener undoListener = new UndoListener(undoManager);
 
+    private JTabbedPane tabbedPane = new JTabbedPane();
+    private JTextPane htmlTextPane = new JTextPane();
+    private JEditorPane plainTextPane = new JEditorPane();
+
     public View() {
         try {
-            // Устанавливаем внешний вид и поведение нашего приложения
-            UIManager.setLookAndFeel(UIManager.getLookAndFeel());
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
             ExceptionHandler.log(e);
         }
+    }
+
+    public void setController(Controller controller) {
+        this.controller = controller;
+    }
+
+    public Controller getController() {
+        return controller;
+    }
+
+    public UndoListener getUndoListener() {
+        return undoListener;
     }
 
     @Override
@@ -33,31 +46,19 @@ public class View extends JFrame implements ActionListener {
 
     }
 
-    public void initGui() {
-        initMenuBar();
-        initEditor();
-        pack();
+    public void init() {
+        initGui();
+        addWindowListener(new FrameListener(this));
+        setVisible(true);
     }
 
-    public void initEditor() {
-        htmlTextPane.setContentType("text/html");
-
-        JScrollPane scrollHtmlTextPane = new JScrollPane(htmlTextPane);
-        tabbedPane.addTab("HTML", scrollHtmlTextPane);
-
-        JScrollPane scrollPlainTextPane = new JScrollPane(plainTextPane);
-        tabbedPane.addTab("Текст", scrollPlainTextPane);
-
-        tabbedPane.addChangeListener(new TabbedPaneChangeListener(this));
-
-        tabbedPane.setPreferredSize(new Dimension(250,250));
-
-        getContentPane().add(tabbedPane, BorderLayout.CENTER);
+    public void exit() {
+        controller.exit();
     }
 
     public void initMenuBar() {
-        JMenuBar menuBar = new JMenuBar(); // Создаем панель меню
-        // инициализация панели с помощью класса MenuHelper
+        JMenuBar menuBar = new JMenuBar();
+
         MenuHelper.initFileMenu(this, menuBar);
         MenuHelper.initEditMenu(this, menuBar);
         MenuHelper.initStyleMenu(this, menuBar);
@@ -65,54 +66,56 @@ public class View extends JFrame implements ActionListener {
         MenuHelper.initColorMenu(this, menuBar);
         MenuHelper.initFontMenu(this, menuBar);
         MenuHelper.initHelpMenu(this, menuBar);
-        // Добавления меню в верхнюю часть панели
+
         getContentPane().add(menuBar, BorderLayout.NORTH);
-
     }
 
-    public Controller getController() {
-        return controller;
+    public void initEditor() {
+        htmlTextPane.setContentType("text/html");
+        JScrollPane htmlScrollPane = new JScrollPane(htmlTextPane);
+        tabbedPane.addTab("HTML", htmlScrollPane);
+
+        JScrollPane plainScrollPane = new JScrollPane(plainTextPane);
+        tabbedPane.addTab("Текст", plainScrollPane);
+
+        tabbedPane.setPreferredSize(new Dimension(300, 300));
+
+        tabbedPane.addChangeListener(new TabbedPaneChangeListener(this));
+
+        getContentPane().add(tabbedPane, BorderLayout.CENTER);
     }
 
-    public void setController(Controller controller) {
-        this.controller = controller;
+    public void undo() {
+        try {
+            undoManager.undo();
+        } catch (CannotUndoException e) {
+            ExceptionHandler.log(e);
+        }
     }
 
-    public void init() {
-        initGui();
-        FrameListener listener = new FrameListener(this);
-        addWindowListener(listener);
-        setVisible(true);
+    public void redo() {
+        try {
+            undoManager.redo();
+        } catch (CannotRedoException e) {
+            ExceptionHandler.log(e);
+        }
     }
 
-    public UndoListener getUndoListener() { return undoListener; }
+
+    public void initGui() {
+        initMenuBar();
+        initEditor();
+        pack();
+    }
 
     public void selectedTabChanged() {
 
     }
-    // Функция отмены действия
-    public void undo() {
-        try {
-            undoManager.undo();
-        } catch (Exception e) {
-            ExceptionHandler.log(e);
-        }
-    }
-    // Функция возврата действия
-    public void redo() {
-        try {
-            undoManager.redo();
-        } catch (Exception e) {
-            ExceptionHandler.log(e);
-        }
 
-    }
-
-    // Функция которая передает информацию можем ли мы отменить действие
     public boolean canUndo() {
         return undoManager.canUndo();
     }
-    // Функция которая передает информацию можем ли мы вернуть действие
+
     public boolean canRedo() {
         return undoManager.canRedo();
     }
@@ -122,14 +125,20 @@ public class View extends JFrame implements ActionListener {
     }
 
     public boolean isHtmlTabSelected() {
-        if (tabbedPane.getSelectedIndex() == 0) {
-            return true;
-        } else {
-            return false;
-        }
+        return tabbedPane.getSelectedIndex() == 0;
     }
 
-    public void exit() {
-        controller.exit();
+    public void selectHtmlTab() {
+        tabbedPane.setSelectedIndex(0);
+        resetUndo();
     }
+
+    public void update() {
+        htmlTextPane.setDocument(controller.getDocument());
+    }
+
+    public void showAbout() {
+        JOptionPane.showMessageDialog(this, "Лучший HTML редактор", "О программе", JOptionPane.INFORMATION_MESSAGE);
+    }
+
 }
