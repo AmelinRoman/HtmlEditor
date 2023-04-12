@@ -8,13 +8,21 @@ import javax.swing.event.MenuListener;
 
 public class UndoMenuListener implements MenuListener {
 
+    private View view; // наше представление
+    private JMenuItem undoMenuItem; // отмена действия
+    private JMenuItem redoMenuItem; // возврат действия
+
 
     public UndoMenuListener(View view, JMenuItem undoMenuItem, JMenuItem redoMenuItem) {
-
+        this.view = view;
+        this.undoMenuItem = undoMenuItem;
+        this.redoMenuItem = redoMenuItem;
     }
     @Override
     public void menuSelected(MenuEvent e) {
-
+        // делаем доступными в зависимости от методов представления
+        undoMenuItem.setEnabled(view.canUndo());
+        redoMenuItem.setEnabled(view.canRedo());
     }
 
     @Override
